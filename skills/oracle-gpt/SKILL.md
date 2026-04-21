@@ -84,6 +84,30 @@ If Oracle is configured as a remote server, add `--remote-host` and `--remote-to
 
 This is the reliable method for continuing conversations.
 
+### File Uploads
+
+When the user wants to send files to ChatGPT, use the CLI `--file` flag. Read `ORACLE_REMOTE_HOST` and `ORACLE_REMOTE_TOKEN` from the user's `~/.claude/.mcp.json`.
+
+```bash
+# Single file
+oracle --remote-host <host:port> --remote-token <token> \
+       -p "帮我review这段代码" \
+       --file src/main.ts
+
+# Multiple files (glob pattern)
+oracle --remote-host <host:port> --remote-token <token> \
+       -p "分析这个项目" \
+       --file "src/**/*.ts"
+
+# Binary files (images, PDFs, etc.) — must use --browser-attachments always
+oracle --remote-host <host:port> --remote-token <token> \
+       --browser-attachments always \
+       -p "分析这个文件" \
+       --file report.pdf
+```
+
+Combine with `--chatgpt-url` if continuing a conversation. The MCP tool's `files` parameter also works for text files: `mcp__oracle__consult(prompt: "...", files: ["path/to/file"])`.
+
 ### After receiving a response
 
 1. Extract the answer text and the conversation URL (`tabUrl` or from the `Conversation URL:` line in CLI output).
