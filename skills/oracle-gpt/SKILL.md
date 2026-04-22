@@ -36,16 +36,35 @@ If the MCP is already configured (the `mcp__oracle__consult` tool is available),
 
 ## Conversation State
 
-You need to track two pieces of state across the session:
+You need to track three pieces of state across the session:
 
 - **`chatgpt_url`** — the ChatGPT conversation URL to reuse. Starts empty. Gets set after the first successful call.
 - **`session_initialized`** — whether the user has already chosen a conversation mode. Starts false.
+- **`use_remote`** — whether to use a remote Oracle server or the local browser. Starts unset. Gets set on first use.
 
 These are conceptual variables you maintain in your working memory throughout the conversation — not files or environment variables.
 
 ## Workflow
 
-### First time the user asks GPT something
+### First time using Oracle in this session — choose execution mode
+
+Before anything else, on the very first Oracle call in the session, use `AskUserQuestion` to ask the user whether to run Oracle locally or on a remote server:
+
+**Question:** "Oracle 使用哪种运行模式？"
+
+**Options:**
+
+1. **远程服务器（推荐）** — "通过远程服务器执行浏览器自动化，不会打开本地浏览器。需要已配置远程服务器地址。"
+2. **本地浏览器** — "在本机启动浏览器执行操作。会打开一个 Chrome 窗口，执行期间请勿关闭。"
+
+Then:
+
+- If **远程服务器**: Set `use_remote` to true. Read `ORACLE_REMOTE_HOST` and `ORACLE_REMOTE_TOKEN` from `~/.claude/.mcp.json` env vars. If they are not configured, ask the user to provide the server address and token, then update the MCP config accordingly. **When `use_remote` is true, always use the Oracle CLI with `--remote-host` and `--remote-token` flags instead of the `mcp__oracle__consult` MCP tool**, because the MCP tool may not correctly route to the remote server.
+- If **本地浏览器**: Set `use_remote` to false. Use the `mcp__oracle__consult` MCP tool directly.
+
+This choice persists for the entire session. The user does not need to choose again unless they start a new session.
+
+### First time the user asks GPT something — choose conversation mode
 
 When `session_initialized` is false, use `AskUserQuestion` to ask the user which conversation mode they want:
 
